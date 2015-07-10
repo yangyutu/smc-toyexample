@@ -51,15 +51,19 @@ p(:,1)=zeros(par.N,1);  % Set initial particle states
 
 for tt=1:sys.T
    % Selection (resampling) and mutation (propagation)
+%   y = randsample(n,k,true,w) or y = randsample(population,k,true,w) returns a weighted sample taken with replacement, using a vector of positive weights w, whose length is n. The probability that the integer i is selected for an entry of y is w(i)/sum(w). Usually, w is a vector of probabilities.
    if ~(tt==1)
       nIdx=randsample(par.N,par.N,'true',W(:,tt-1));
+      % forward sampling the next hidden states, the importance distribution is the prior transition probability
       p(:,tt)=sys.a*p(nIdx,tt-1)+sys.sigmav*randn(par.N,1);
    end
    
    % Calculate log-weights (for increased accuracy)
    %w(:,tt)=normpdf(y(tt),sys.c*p(:,tt),sys.sigmae);
+   % here is to get log version of normal distribution for p(y|x)
    w(:,tt) = -0.5*log(2*pi*sys.sigmae^2) - 0.5/sys.sigmae^2.*( y(tt)-sys.c*p(:,tt) ).^2;
    
+   % this reason for this is to avoid truncation error for tiny numbers
    % Transform weights to usual base
    wmax = max( w(:,tt) );
    w(:,tt) = exp( w(:,tt) - wmax );
